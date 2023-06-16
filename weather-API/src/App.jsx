@@ -1,61 +1,70 @@
 import React, { useState } from 'react';
+import './App.css';
+import axios from 'axios';
 
-const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
-
-function App() {
+export default function App() {
+  const [data, setData] = useState({});
   const [location, setLocation] = useState('');
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=imperial&appid=d561e4da9b43646bae2a750badc8c417`;
 
-  const handleLocationChange = (event) => {
-    setLocation(event.target.value);
-  };
-
-  const handleSearch = () => {
-    if (location.trim() === '') {
-      setError('Please enter a valid location.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${API_KEY}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.cod === 200) {
-          setWeather(data);
-        } else {
-          setError('Location not found.');
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError('An error occurred while fetching the weather data.');
-        setLoading(false);
+  const searchLocation = (event) => {
+    if (event.key === 'Enter') {
+      axios.get(url).then((response) => {
+        setData(response.data);
+        console.log(response.data);
       });
+      setLocation('');
+    }
   };
-
   return (
-    <div className="App">
-      <h1>Weather App</h1>
-      <div>
-        <input type="text" value={location} onChange={handleLocationChange} placeholder="Enter location" />
-        <button onClick={handleSearch} disabled={loading}>
-          {loading ? 'Loading...' : 'Search'}
-        </button>
+    <div className="app">
+      <div className="search">
+        <input
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          onKeyPress={searchLocation}
+          placeholder="Enter Location"
+          type="text"
+        />
       </div>
-      {error && <p>{error}</p>}
-      {weather && (
-        <div>
-          <h2>Current Weather for {weather.name}</h2>
-          <p>Temperature: {Math.round(weather.main.temp - 273.15)}°C</p>
-          <p>Description: {weather.weather[0].description}</p>
+      <div className="container">
+        <div className="top">
+          <div className="location">
+            <p>{data.name}</p>
+          </div>
+          <div className="temp">
+            {data.main ? <h1>{data.main.temp.toFixed()}°F</h1> : null}
+          </div>
+          <div className="description">
+            {data.weather ? <h3>{data.weather[0].description}</h3> : null}
+          </div>
         </div>
-      )}
+        {data.name !== undefined && (
+          <div className="bottom">
+            <div className="feels">
+              <p>Feels Like : </p>
+              {data.main ? (
+                <p className="bold">{data.main.feels_like.toFixed()}°F</p>
+              ) : null}
+            </div>
+            <div className="humidity">
+              <p>Humidity : </p>
+              {data.main ? (
+                <p className="bold">
+                  {data.main.humidity}
+                  <span>%</span>
+                </p>
+              ) : null}
+            </div>
+            <div className="wind">
+              <p>Wind Speed : </p>
+              {data.wind ? (
+                <p className="bold">{data.wind.speed.toFixed()}mph</p>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-export default App;
